@@ -2,6 +2,7 @@
 using GastosAula2.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Linq;
 
 namespace GastosAula2.Controllers
@@ -10,13 +11,16 @@ namespace GastosAula2.Controllers
     {
         public ActionResult Index()
         {
-            //INSTACIOU O BANCO
             GastoContext db = new GastoContext();
 
-            //VARIAVEL COM OS OBJETOS DO BANCO;
-            var gastos = db.Gastos.ToList();
 
-            //RETORNA PARA O HTML OS DADOS VINDO DO BANCO
+            var gastos = db.Gastos
+                            .Include("Categoria")
+                            .ToList();
+
+            var gastosTotais = gastos.Sum(x => x.Valor);
+            ViewBag.ValorTotal = gastosTotais;
+
             return View(gastos);
         }
 
@@ -31,6 +35,7 @@ namespace GastosAula2.Controllers
 
         public ActionResult Create()
         {
+            FillCategory();
             return View();
         }
 
@@ -53,21 +58,28 @@ namespace GastosAula2.Controllers
 
         public ActionResult Edit(int id)
         {
-            return View();
+            GastoContext db = new GastoContext();
+            var gasto = db.Gastos.Find(id);
+
+            return View(gasto);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit(int id, IFormCollection collection)
+        public ActionResult Edit(int id, Gasto obj)
         {
-            try
+            GastoContext db = new GastoContext();
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                //
+               // db.SaveChangesAsync();
+                return RedirectToAction("Index");
             }
-            catch
+            else
             {
-                return View();
+                return View(obj);
             }
+
         }
 
         public ActionResult Delete(int id)
@@ -88,5 +100,14 @@ namespace GastosAula2.Controllers
                 return View();
             }
         }
+        //VOID SEM RETORNO
+        public void FillCategory()
+        {
+            GastoContext db = new GastoContext();
+
+            ViewBag.CategoryId = new SelectList(db.Categorias.ToList(), "IdCategory", "Name");
+                
+        }
+      
     }
 }
