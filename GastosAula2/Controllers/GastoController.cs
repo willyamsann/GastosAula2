@@ -3,6 +3,7 @@ using GastosAula2.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Data.Entity;
 using System.Linq;
 
 namespace GastosAula2.Controllers
@@ -35,7 +36,7 @@ namespace GastosAula2.Controllers
 
         public ActionResult Create()
         {
-            FillCategory();
+            FillCategory(1);
             return View();
         }
 
@@ -48,6 +49,7 @@ namespace GastosAula2.Controllers
             {
                 db.Gastos.Add(obj);
                 db.SaveChangesAsync();
+
                 return RedirectToAction("Index");
             }
             else
@@ -60,7 +62,7 @@ namespace GastosAula2.Controllers
         {
             GastoContext db = new GastoContext();
             var gasto = db.Gastos.Find(id);
-
+            FillCategory(gasto.CategoriaId);
             return View(gasto);
         }
 
@@ -71,8 +73,13 @@ namespace GastosAula2.Controllers
             GastoContext db = new GastoContext();
             if (ModelState.IsValid)
             {
-                //
-               // db.SaveChangesAsync();
+                using (var dbContext = new GastoContext())
+                {
+                    Gasto gasto = db.Gastos.First(g => g.Id == id);
+                    gasto.Title = obj.Title;
+                    dbContext.SaveChangesAsync();
+                }
+
                 return RedirectToAction("Index");
             }
             else
@@ -84,28 +91,35 @@ namespace GastosAula2.Controllers
 
         public ActionResult Delete(int id)
         {
-            return View();
+            GastoContext db = new GastoContext();
+            var gasto = db.Gastos.Find(id);
+            return View(gasto);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Delete(int id, IFormCollection collection)
+        public ActionResult Delete(int id, Gasto obj)
         {
-            try
+            GastoContext db = new GastoContext();
+            if (ModelState.IsValid)
             {
-                return RedirectToAction(nameof(Index));
+                Gasto gasto = db.Gastos.Find(obj.Id);
+                db.Gastos.Remove(gasto);
+                db.SaveChangesAsync();  
+                return RedirectToAction("Index");
             }
-            catch
+            else
             {
-                return View();
+                return View(obj);
             }
+
         }
         //VOID SEM RETORNO
-        public void FillCategory()
+        public void FillCategory(int id)
         {
             GastoContext db = new GastoContext();
 
-            ViewBag.CategoryId = new SelectList(db.Categorias.ToList(), "IdCategory", "Name");
+            ViewBag.CategoryId = new SelectList(db.Categorias.ToList(), "IdCategory", "Name",id);
                 
         }
       

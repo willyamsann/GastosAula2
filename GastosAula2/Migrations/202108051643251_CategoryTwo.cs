@@ -16,7 +16,7 @@
                     })
                 .PrimaryKey(t => t.IdCategory);
             
-            AddColumn("dbo.Gasto", "CategoriaId", c => c.Int(nullable: false));
+            AddColumn("dbo.Gasto", "CategoriaId", c => c.Int(nullable: true));
             CreateIndex("dbo.Gasto", "CategoriaId");
             AddForeignKey("dbo.Gasto", "CategoriaId", "dbo.Categoria", "IdCategory", cascadeDelete: false);
         }
